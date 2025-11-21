@@ -20,7 +20,6 @@ const Player = {
     y: FLOOR_Y - 30,
     width: 30,
     height: 30,
-    xVelocity: 3, // <-- 修正：主角向右移动的速度 (自动跑酷)
     yVelocity: 0,
     isJumping: false,
     ability: 0, // 0: 无, 1: 短跳, 2: 长跳
@@ -28,20 +27,11 @@ const Player = {
     longJumpPower: -25,
 
     draw() {
-        // 玩家颜色随能力变化
         ctx.fillStyle = this.ability === 1 ? 'gold' : this.ability === 2 ? 'magenta' : 'blue';
         ctx.fillRect(this.x, this.y, this.width, this.height);
     },
 
     update() {
-        // 水平移动 (主角自动向前)
-        this.x += this.xVelocity;
-        
-        // 限制主角不跑出左侧边界
-        if (this.x < 0) {
-            this.x = 0;
-        }
-
         // 重力
         this.yVelocity += GRAVITY;
         this.y += this.yVelocity;
@@ -59,11 +49,11 @@ const Player = {
             if (this.ability === 1) {
                 this.yVelocity = this.shortJumpPower;
                 this.isJumping = true;
-                this.ability = 0; // 跳跃后重置能力
+                this.ability = 0;
             } else if (this.ability === 2) {
                 this.yVelocity = this.longJumpPower;
                 this.isJumping = true;
-                this.ability = 0; // 跳跃后重置能力
+                this.ability = 0;
             }
         }
     }
@@ -91,8 +81,7 @@ class GameObject {
     }
 
     update() {
-        // 障碍物和音符向左移动
-        this.x -= OBSTACLE_SPEED; 
+        this.x -= OBSTACLE_SPEED;
         // 销毁离开屏幕的物体
         if (this.x + this.width < 0) {
             return true; // 返回 true 表示可以销毁
@@ -121,8 +110,8 @@ function spawnObjects(timestamp) {
             const width = Math.floor(Math.random() * 60) + 40;
             const newObstacle = new GameObject(GAME_WIDTH, FLOOR_Y - 30, width, 30, 'black', 'obstacle');
             gameObjects.push(newObstacle);
-        } else { // 40% 概率生成音符 (随机短跳或长跳)
-            const noteType = Math.random() < 0.5 ? 1 : 2; 
+        } else { // 40% 概率生成音符
+            const noteType = Math.random() < 0.5 ? 1 : 2; // 随机短跳或长跳
             const color = noteType === 1 ? 'green' : 'red';
             const newNote = new GameObject(GAME_WIDTH, FLOOR_Y - 60, 15, 25, color, 'note', noteType);
             gameObjects.push(newNote);
@@ -171,7 +160,6 @@ function gameLoop(timestamp) {
         }
         
         // 得分检测 (障碍物从主角身后经过)
-        // 只有障碍物类型，且通过主角的位置，且未计分，才加分
         if (obj.type === 'obstacle' && obj.x + obj.width < Player.x && !obj.passed) {
              score++;
              obj.passed = true;
@@ -188,20 +176,11 @@ function gameLoop(timestamp) {
 }
 
 // --- 事件监听 ---
-
-// 键盘控制 (空格键跳跃)
 document.addEventListener('keydown', (e) => {
     if (e.code === 'Space') {
         Player.jump();
     }
 });
-
-// 触摸屏控制 (点击屏幕任意位置跳跃) <-- 新增手机支持
-document.addEventListener('touchstart', (e) => {
-    e.preventDefault(); 
-    Player.jump();
-});
-
 
 // 启动游戏
 gameLoop(0);
